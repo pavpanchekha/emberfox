@@ -225,7 +225,8 @@ the [next chapter](text.md), we'll replace magic numbers with font
 metrics.
 
 [^the-cursor]: This is where a blinking "cursor" would go, hence the
-    choice of `cx` and `cy` as the variable names.
+    choice of `cx` and `cy` as the variable names. Plus, I want to use
+    `x` and `y` [later in the book](layout.md).
 
 The text now forms a line from left to right. But with an 800 pixel
 wide canvas and 13 pixels per character, one line only fits about 60
