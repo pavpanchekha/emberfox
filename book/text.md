@@ -249,23 +249,23 @@ a time:[^10]
 ``` {.python expected=False}
 for word in text.split():
     w = font.measure(word)
-    if x + w >= WIDTH - HSTEP:
-        y += font.metrics("linespace") * 1.2
-        x = HSTEP
-    self.display_list.append((x, y, word))
-    x += w + font.measure(" ")
+    if cx + w >= WIDTH - HSTEP:
+        cy += font.metrics("linespace") * 1.2
+        cx = HSTEP
+    self.display_list.append((cx, cy, word))
+    cx += w + font.measure(" ")
 ```
 
 There's a lot of moving parts to this code. First, we measure the width
-of the text, and store it in `w`. We'd normally draw the text at `x`,
-so its right end would be at `x + w`, so we check if that's past the
+of the text, and store it in `w`. We'd normally draw the text at `cx`,
+so its right end would be at `cx + w`, so we check if that's past the
 edge of the page. Now we have the location to *start* drawing the word,
-so we add to the display list; and finally we update `x` to point to the
+so we add to the display list; and finally we update `cx` to point to the
 end of the word.
 
 There are a few surprises in this code. One is that I call `metrics`
 with an argument; that just returns the named metric directly. Also, I
-increment `x` by `w + font.measure(" ")` instead of `w`. That's
+increment `cx` by `w + font.measure(" ")` instead of `w`. That's
 because I want to have spaces between the words: the call to `split()`
 removed all of the whitespace, and this adds it back. I don't add the
 space to `w` on the second line, though, because you don't need a
@@ -424,7 +424,7 @@ if instance(tok, Text):
     )
     for word in tok.text.split():
         # ...
-        display_list.append((x, y, word, font))
+        display_list.append((cx, cy, word, font))
 ```
 
 Make sure to update `render` to expect and use this extra font field
@@ -457,8 +457,8 @@ class Layout:
 Every local variable in `layout` then becomes a field of `Layout`:
 
 ``` {.python}
-self.x = HSTEP
-self.y = VSTEP
+self.cx = HSTEP
+self.cy = VSTEP
 self.weight = "normal"
 self.style = "roman"
 self.size = 16
@@ -580,14 +580,14 @@ moved down. That means its vertical position has to be computed later,
 *after* the big text passes through `token`. But since the small text
 comes through the loop first, we need a *two-pass* algorithm for lines
 of text: the first pass identifies what words go in the line and
-computes their `x` positions, while the second pass vertically aligns
-the words and computes their `y` positions.
+computes their *x* positions, while the second pass vertically aligns
+the words and computes their *y* positions.
 
 Let's start with phase one. Since one line contains text from many
 tags, we need a a field on `Layout` to store the line-to-be. That
 field, `line`, will be a list, and `text` will add words to it instead
-of the display list. Entries in `line` will have `x` but not `y`
-positions, since `y` positions aren't computed in the first phase:
+of the display list. Entries in `line` will have *x* but not *y*
+positions, since *y* positions aren't computed in the first phase:
 
 
 ``` {.python}
@@ -600,14 +600,14 @@ def text(self, text):
     # ...
     for word in text.split():
         # ...
-        self.line.append((self.x, word, font))
+        self.line.append((self.cx, word, font))
 ```
 
 The second phase, meanwhile, needs to happen when we're finished with
 a line; I'm calling that second phase `flush()`:
 
 ``` {.python}
-if self.x + w > WIDTH - HSTEP:
+if self.cx + w > WIDTH - HSTEP:
     self.flush()
 ```
 
@@ -615,7 +615,7 @@ This new `flush` function has three main responsibilities:
 
 1. It must align the words along the line;
 2. It must add all those words to the display list; and
-3. It must update the `x` and `y` fields
+3. It must update the `cx` and `cy` fields
 
 Since we want words to line up "on the line", let's start by computing
 where that line should be. That depends on the metrics for all the
@@ -645,7 +645,7 @@ to account for the leading:[^leading-half]
 [line-height-def]: https://www.w3.org/TR/CSS2/visudet.html#leading
     
 ``` {.python}
-baseline = self.y + 1.2 * max_ascent
+baseline = self.cy + 1.2 * max_ascent
 ```
 
 Now that we know where the line is, we can place each word relative to
@@ -664,7 +664,7 @@ Finally, `flush` must update the `Layout`'s `x`, `y`, and `line`
 fields. `x` and `line` are easy:
 
 ``` {.python}
-self.x = HSTEP
+self.cx = HSTEP
 self.line = []
 ```
 
@@ -673,7 +673,7 @@ deepest descender:
 
 ``` {.python}
 max_descent = max([metric["descent"] for metric in metrics])
-self.y = baseline + 1.2 * max_descent
+self.cy = baseline + 1.2 * max_descent
 ```
 
 Now all the text is aligned along the line, even when text sizes are
@@ -701,10 +701,10 @@ def token(self, tok):
     # ...
     elif tok.tag == "/p":
         self.flush()
-        self.y += VSTEP
+        self.cy += VSTEP
 ```
 
-I add a bit extra to `y` here to create a little gap between
+I add a bit extra to `cy` here to create a little gap between
 paragraphs.
 
 ::: {.further}
