@@ -212,15 +212,20 @@ every letter in the same place, so they all overlap! Let's fix that:
 
 ``` {.python expected=False}
 HSTEP, VSTEP = 13, 18
-x, y = HSTEP, VSTEP
+cx, cy = HSTEP, VSTEP
 for c in text:
-    self.canvas.create_text(x, y, text=c)
-    x += HSTEP
+    self.canvas.create_text(cx, cy, text=c)
+    cx += HSTEP
 ```
 
-I picked the magic numbers—13 and 18—by trying a few different values
-and picking one that looked most readable. In the [next
-chapter](text.md), we'll replace magic numbers with font metrics.
+The variables^[the-cursor] `cx` and `cy` point to where the next
+character will go, and I picked the magic numbers—13 and 18—by trying
+a few different values and picking one that looked most readable. In
+the [next chapter](text.md), we'll replace magic numbers with font
+metrics.
+
+[^the-cursor]: This is where a blinking "cursor" would go, hence the
+    choice of `cx` and `cy` as the variable names.
 
 The text now forms a line from left to right. But with an 800 pixel
 wide canvas and 13 pixels per character, one line only fits about 60
@@ -230,14 +235,26 @@ to *wrap* the text once we reach the edge of the screen:
 ``` {.python indent=8}
 for c in text:
     # ...
-    if x >= WIDTH - HSTEP:
-        y += VSTEP
-        x = HSTEP
+    if cx >= WIDTH - HSTEP:
+        cy += VSTEP
+        cx = HSTEP
 ```
 
-The code wraps text by increasing *y* and reseting *x*[^13] once *x*
-goes past 787 pixels.[^14] Wrapping makes it possible to see a lot
-more text.
+The code wraps text by increasing `cy` and resetting `cx`[^crlf] once
+`cx` goes past 787 pixels.[^not-800] Wrapping makes it possible to see
+a lot more text.
+
+[^crlf]: In the olden days of type writers, increasing *y* meant
+    *feed*ing in a new *line*, and resetting *x* meant *return*ing the
+    *carriage* that printed letters to the left edge of the page. So
+    ASCII standardizes two separate characters—"carriage return" and
+    "line feed"—for these operations, so that ASCII could be directly
+    executed by teletypewriters. That's why headers in HTTP are
+    separated by `\r\n`, even though modern computers have no
+    mechanical carriage.
+
+[^not-800]: Not 800, because we started at pixel 13 and I want to leave an
+    even gap on both sides.
 
 ::: {.further}
 Chinese characters are usually, but not always, independent: <span
@@ -281,7 +298,7 @@ each character let's add it to a list, together with its position:
 ``` {.python}
 self.display_list = []
 for c in text:
-    self.display_list.append((x, y, c))
+    self.display_list.append((cx, cy, c))
     # ...
 self.render()
 ```
@@ -498,16 +515,3 @@ text. Be careful in how you split the task between `layout` and
 
 [^12]: If you're in the US, you'll probably see this phase take a
     while: China is far away!
-
-[^13]: In the olden days of type writers, a new line was two
-    operations: you would *feed* in a new *line* to move down the
-    page, and then *return* the *carriage* that printed letters to its
-    left edge. You can see these same operations in the code. When
-    ASCII was standardized, they added two separate
-    characters—"carriage return" and "line feed"—for these operations,
-    so that ASCII characters could be directly executed by
-    teletypewriters. That's why headers in HTTP are separated by
-    `\r\n`, even though modern computers have no mechanical carriage.
-
-[^14]: Not 800, because we started at pixel 13 and I want to leave an
-    even gap on both sides.

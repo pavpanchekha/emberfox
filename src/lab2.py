@@ -84,13 +84,13 @@ class Browser:
 
     def layout(self, text):
         self.display_list = []
-        x, y = HSTEP, VSTEP
+        cx, cy = HSTEP, VSTEP
         for c in text:
-            self.display_list.append((x, y, c))
-            x += HSTEP
-            if x >= WIDTH - HSTEP:
-                y += VSTEP
-                x = HSTEP
+            self.display_list.append((cx, cy, c))
+            cx += HSTEP
+            if cx >= WIDTH - HSTEP:
+                cy += VSTEP
+                cx = HSTEP
         self.render()
 
     def render(self):
